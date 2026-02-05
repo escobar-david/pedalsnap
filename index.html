@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>PedalSnap</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --surface: #141414;
+            --surface-elevated: #1c1c1c;
+            --border: #2a2a2a;
+            --text: #f5f5f5;
+            --text-dim: #888;
+            --accent: #ff6b35;
+            --accent-dim: rgba(255, 107, 53, 0.15);
+            --success: #4ade80;
+            --danger: #ef4444;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow: hidden;
+        }
+        
+        .app {
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .screen {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .screen.active {
+            display: flex;
+        }
+        
+        /* Header */
+        .header {
+            padding: 16px 20px;
+            padding-top: max(16px, env(safe-area-inset-top));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .header-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 8px;
+            cursor: pointer;
+        }
+        
+        .header-btn.text-dim {
+            color: var(--text-dim);
+        }
+        
+        .header-icon {
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text);
+            padding: 8px;
+            cursor: pointer;
+        }
+        
+        /* Home Screen */
+        .search-container {
+            padding: 16px 20px;
+            flex-shrink: 0;
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        .search-bar input::placeholder {
+            color: var(--text-dim);
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 0 20px 16px;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+        
+        .filter-tab {
+            padding: 8px 16px;
+            background: var(--surface);
+            border: none;
+            border-radius: 20px;
+            color: var(--text-dim);
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        
+        .filter-tab.active {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        
+        .presets-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 100px;
+        }
+        
+        .preset-card {
+            display: flex;
+            gap: 14px;
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        
+        .preset-card:active {
+            transform: scale(0.98);
+        }
+        
+        .preset-thumb {
+            width: 72px;
+            height: 72px;
+            border-radius: 10px;
+            background: var(--surface-elevated);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .preset-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .preset-thumb-empty {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+        }
+        
+        .preset-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .preset-song {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .preset-artist {
+            color: var(--text-dim);
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+        
+        .preset-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .preset-tag {
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: var(--text-dim);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        
+        /* FAB */
+        .fab {
+            position: fixed;
+            bottom: calc(80px + var(--safe-bottom));
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--accent);
+            border: none;
+            border-radius: 18px;
+            color: var(--bg);
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(255, 107, 53, 0.35);
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .fab:active {
+            transform: scale(0.95);
+        }
+        
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(70px + var(--safe-bottom));
+            padding-bottom: var(--safe-bottom);
+            background: var(--surface);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            z-index: 99;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 0.65rem;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        
+        .nav-item.active {
+            color: var(--accent);
+        }
+        
+        .nav-icon {
+            font-size: 1.4rem;
+        }
+        
+        /* Capture Screen */
+        .capture-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .capture-preview {
+            width: 100%;
+            max-width: 340px;
+            aspect-ratio: 4/3;
+            background: var(--surface);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed var(--border);
+        }
+        
+        .capture-preview.has-image {
+            border: none;
+        }
+        
+        .capture-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .capture-placeholder {
+            text-align: center;
+            color: var(--text-dim);
+        }
+        
+        .capture-placeholder-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        
+        .capture-buttons {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .capture-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface);
+            border: none;
+            border-radius: 16px;
+            padding: 20px 32px;
+            color: var(--text);
+            cursor: pointer;
+        }
+        
+        .capture-btn:active {
+            background: var(--surface-elevated);
+        }
+        
+        .capture-btn-icon {
+            font-size: 2rem;
+        }
+        
+        .capture-btn span {
+            font-size: 0.875rem;
+            color: var(--text-dim);
+        }
+        
+        .capture-btn.primary {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        
+        .capture-btn.primary span {
+            color: var(--bg);
+            opacity: 0.8;
+        }
+        
+        /* Edit Screen */
+        .edit-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 100px;
+        }
+        
+        .edit-preview {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--surface);
+            position: relative;
+        }
+        
+        .edit-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--bg);
+        }
+        
+        .form-section {
+            padding: 20px;
+        }
+        
+        .form-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+        }
+        
+        .form-input:focus {
+            border-color: var(--accent);
+        }
+        
+        .form-input::placeholder {
+            color: var(--text-dim);
+        }
+        
+        .quick-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .quick-tag {
+            padding: 10px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-dim);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        
+        .quick-tag.selected {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+        
+        .section-divider {
+            height: 8px;
+            background: var(--bg);
+        }
+        
+        .pedals-section {
+            padding: 20px;
+        }
+        
+        .pedals-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .pedals-title {
+            font-weight: 600;
+        }
+        
+        .add-pedal-btn {
+            background: var(--accent-dim);
+            border: 1px dashed var(--accent);
+            border-radius: 10px;
+            color: var(--accent);
+            padding: 10px 16px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .pedal-card {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        
+        .pedal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .pedal-marker {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        
+        .pedal-inputs {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .pedal-input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text);
+            font-size: 0.875rem;
+            outline: none;
+        }
+        
+        .pedal-input:focus {
+            border-color: var(--accent);
+        }
+        
+        .pedal-input::placeholder {
+            color: var(--text-dim);
+        }
+        
+        .pedal-delete {
+            background: none;
+            border: none;
+            color: var(--danger);
+            font-size: 1.25rem;
+            padding: 8px;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        
+        .knobs-list {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .knob-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        
+        .knob-input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--text);
+            font-size: 0.875rem;
+            outline: none;
+        }
+        
+        .knob-input:focus {
+            border-color: var(--accent);
+        }
+        
+        .knob-input.value {
+            flex: 0.7;
+            text-align: center;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .knob-delete {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1rem;
+            padding: 6px;
+            cursor: pointer;
+        }
+        
+        .add-knob-btn {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        
+        .save-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 20px;
+            padding-bottom: calc(16px + var(--safe-bottom));
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+        }
+        
+        .save-btn {
+            width: 100%;
+            background: var(--accent);
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            color: var(--bg);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .save-btn:active {
+            opacity: 0.9;
+        }
+        
+        .save-btn:disabled {
+            opacity: 0.5;
+        }
+        
+        /* Detail Screen */
+        .detail-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--surface);
+            position: relative;
+        }
+        
+        .detail-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: var(--bg);
+        }
+        
+        .pedal-marker-overlay {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            cursor: pointer;
+        }
+        
+        .detail-info {
+            padding: 20px;
+        }
+        
+        .detail-song {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .detail-artist {
+            color: var(--text-dim);
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+        
+        .detail-meta {
+            display: flex;
+            gap: 16px;
+            color: var(--text-dim);
+            font-size: 0.875rem;
+        }
+        
+        .detail-section-title {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 20px;
+            margin-bottom: 12px;
+        }
+        
+        .detail-pedals {
+            padding: 0 20px 100px;
+        }
+        
+        .detail-pedal-card {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        
+        .detail-pedal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .detail-pedal-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .detail-pedal-model {
+            color: var(--text-dim);
+            font-size: 0.875rem;
+        }
+        
+        .detail-knob-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .detail-knob-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-knob-name {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+        
+        .detail-knob-value {
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 1rem;
+        }
+        
+        .detail-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 20px;
+            padding-bottom: calc(16px + var(--safe-bottom));
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 12px;
+        }
+        
+        .detail-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .detail-btn.edit {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        
+        .detail-btn.delete {
+            background: var(--surface-elevated);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        /* Annotate mode */
+        .annotate-mode .edit-preview {
+            cursor: crosshair;
+        }
+        
+        .annotate-hint {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.75);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text);
+            white-space: nowrap;
+            z-index: 10;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface-elevated);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 200;
+            border: 1px solid var(--border);
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        /* Confirm Dialog */
+        .dialog-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 300;
+        }
+        
+        .dialog-overlay.show {
+            display: flex;
+        }
+        
+        .dialog {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 24px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .dialog h3 {
+            margin-bottom: 8px;
+        }
+        
+        .dialog p {
+            color: var(--text-dim);
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+        
+        .dialog-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .dialog-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .dialog-btn.cancel {
+            background: var(--surface-elevated);
+            color: var(--text);
+        }
+        
+        .dialog-btn.confirm {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .hidden-input {
+            display: none;
+        }
+        
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Home Screen -->
+        <div id="screen-home" class="screen active">
+            <div class="header">
+                <span class="header-title">PedalSnap</span>
+                <span style="font-size: 0.8rem; color: var(--text-dim);">🎸</span>
+            </div>
+            
+            <div class="search-container">
+                <div class="search-bar">
+                    <span>🔍</span>
+                    <input type="text" id="search-input" placeholder="Buscar canción o banda...">
+                </div>
+            </div>
+            
+            <div class="filter-tabs" id="filter-tabs">
+                <button class="filter-tab active" data-filter="all">Todos</button>
+                <button class="filter-tab" data-filter="cover">Covers</button>
+                <button class="filter-tab" data-filter="original">Originales</button>
+                <button class="filter-tab" data-filter="live">Live</button>
+                <button class="filter-tab" data-filter="ensayo">Ensayo</button>
+            </div>
+            
+            <div class="presets-list" id="presets-list">
+                <div class="loading">Cargando...</div>
+            </div>
+            
+            <button class="fab" id="fab-add">+</button>
+            
+            <nav class="bottom-nav">
+                <button class="nav-item active" data-screen="home">
+                    <span class="nav-icon">📚</span>
+                    <span>Presets</span>
+                </button>
+                <button class="nav-item" data-screen="capture">
+                    <span class="nav-icon">📷</span>
+                    <span>Capturar</span>
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Capture Screen -->
+        <div id="screen-capture" class="screen">
+            <div class="header">
+                <button class="header-btn text-dim" onclick="goHome()">Cancelar</button>
+                <span class="header-title">Capturar</span>
+                <span style="width: 70px;"></span>
+            </div>
+            
+            <div class="capture-container">
+                <div class="capture-preview" id="capture-preview">
+                    <div class="capture-placeholder">
+                        <div class="capture-placeholder-icon">📷</div>
+                        <p>Toma o selecciona una foto<br>de tu pedalboard</p>
+                    </div>
+                </div>
+                
+                <div class="capture-buttons">
+                    <button class="capture-btn" onclick="selectFromGallery()">
+                        <span class="capture-btn-icon">🖼️</span>
+                        <span>Galería</span>
+                    </button>
+                    <button class="capture-btn primary" onclick="takePhoto()">
+                        <span class="capture-btn-icon">📸</span>
+                        <span>Cámara</span>
+                    </button>
+                </div>
+            </div>
+            
+            <nav class="bottom-nav">
+                <button class="nav-item" data-screen="home">
+                    <span class="nav-icon">📚</span>
+                    <span>Presets</span>
+                </button>
+                <button class="nav-item active" data-screen="capture">
+                    <span class="nav-icon">📷</span>
+                    <span>Capturar</span>
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Edit Screen -->
+        <div id="screen-edit" class="screen">
+            <div class="header">
+                <button class="header-btn text-dim" onclick="goHome()">Cancelar</button>
+                <span class="header-title" id="edit-title">Nuevo Preset</span>
+                <span style="width: 70px;"></span>
+            </div>
+            
+            <div class="edit-scroll">
+                <div class="edit-preview" id="edit-preview" onclick="handlePreviewClick(event)">
+                    <img id="edit-image" src="" alt="Preview">
+                    <div class="annotate-hint" id="annotate-hint" style="display: none;">
+                        Toca donde está el pedal
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="form-label">Nombre / Canción</div>
+                    <input type="text" class="form-input" id="input-song" placeholder="ej: Clocks, Set ensayo...">
+                </div>
+                
+                <div class="form-section" style="padding-top: 0;">
+                    <div class="form-label">Artista / Contexto</div>
+                    <input type="text" class="form-input" id="input-artist" placeholder="ej: Coldplay, Ensayo martes...">
+                </div>
+                
+                <div class="form-section" style="padding-top: 0;">
+                    <div class="form-label">Etiqueta</div>
+                    <div class="quick-tags" id="quick-tags">
+                        <button class="quick-tag" data-tag="cover">Cover</button>
+                        <button class="quick-tag" data-tag="original">Original</button>
+                        <button class="quick-tag" data-tag="live">Live</button>
+                        <button class="quick-tag" data-tag="ensayo">Ensayo</button>
+                        <button class="quick-tag" data-tag="grabacion">Grabación</button>
+                    </div>
+                </div>
+                
+                <div class="section-divider"></div>
+                
+                <div class="pedals-section">
+                    <div class="pedals-header">
+                        <span class="pedals-title">Pedales y Ajustes</span>
+                        <button class="add-pedal-btn" id="add-pedal-btn" onclick="toggleAnnotateMode()">+ Marcar</button>
+                    </div>
+                    <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 16px;">
+                        Toca "Marcar" y luego la foto para señalar cada pedal.
+                    </p>
+                    <div id="pedals-list"></div>
+                </div>
+            </div>
+            
+            <div class="save-bar">
+                <button class="save-btn" id="save-btn" onclick="savePreset()">Guardar Preset</button>
+            </div>
+        </div>
+        
+        <!-- Detail Screen -->
+        <div id="screen-detail" class="screen">
+            <div class="header">
+                <button class="header-icon" onclick="goHome()">←</button>
+                <span class="header-title">Detalle</span>
+                <button class="header-icon" onclick="editCurrentPreset()">✏️</button>
+            </div>
+            
+            <div class="edit-scroll">
+                <div class="detail-image" id="detail-image">
+                    <img id="detail-img" src="" alt="Pedalboard">
+                </div>
+                
+                <div class="detail-info">
+                    <div class="detail-song" id="detail-song">-</div>
+                    <div class="detail-artist" id="detail-artist">-</div>
+                    <div class="detail-meta">
+                        <span id="detail-date">📅 -</span>
+                        <span id="detail-tag">🏷️ -</span>
+                    </div>
+                </div>
+                
+                <div class="detail-section-title" id="pedals-section-title" style="display: none;">Pedales</div>
+                <div class="detail-pedals" id="detail-pedals"></div>
+            </div>
+            
+            <div class="detail-actions">
+                <button class="detail-btn delete" onclick="confirmDelete()">Eliminar</button>
+                <button class="detail-btn edit" onclick="editCurrentPreset()">Editar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <div class="dialog-overlay" id="delete-dialog">
+        <div class="dialog">
+            <h3>¿Eliminar preset?</h3>
+            <p>Esta acción no se puede deshacer.</p>
+            <div class="dialog-buttons">
+                <button class="dialog-btn cancel" onclick="closeDialog()">Cancelar</button>
+                <button class="dialog-btn confirm" onclick="deletePreset()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="file-camera" class="hidden-input" accept="image/*" capture="environment">
+    <input type="file" id="file-gallery" class="hidden-input" accept="image/*">
+    
+    <script>
+        // ============================================
+        // IndexedDB Database
+        // ============================================
+        const DB_NAME = 'pedalsnap';
+        const DB_VERSION = 1;
+        let db = null;
+        
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    
+                    // Presets store
+                    if (!database.objectStoreNames.contains('presets')) {
+                        const presetsStore = database.createObjectStore('presets', { keyPath: 'id' });
+                        presetsStore.createIndex('createdAt', 'createdAt', { unique: false });
+                        presetsStore.createIndex('tag', 'tag', { unique: false });
+                        presetsStore.createIndex('song', 'song', { unique: false });
+                    }
+                    
+                    // Images store (separate for better performance)
+                    if (!database.objectStoreNames.contains('images')) {
+                        database.createObjectStore('images', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+        
+        function dbAdd(storeName, data) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.add(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        function dbPut(storeName, data) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.put(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        function dbGet(storeName, id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        function dbGetAll(storeName) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        function dbDelete(storeName, id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(storeName, 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+        
+        // ============================================
+        // App State
+        // ============================================
+        let presets = [];
+        let currentImage = null;
+        let currentImageId = null;
+        let pedals = []; // New structure for pedals
+        let annotateMode = false;
+        let activeFilter = 'all';
+        let currentPresetId = null;
+        let isEditing = false;
+        
+        // ============================================
+        // UUID Generator
+        // ============================================
+        function generateId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        
+        // ============================================
+        // Initialize
+        // ============================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await initDB();
+                await loadPresets();
+                setupEventListeners();
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showToast('Error al iniciar la app');
+            }
+        });
+        
+        async function loadPresets() {
+            presets = await dbGetAll('presets');
+            presets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            renderPresets();
+        }
+        
+        function setupEventListeners() {
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const screen = btn.dataset.screen;
+                    if (screen === 'home') goHome();
+                    else if (screen === 'capture') goToCapture();
+                });
+            });
+            
+            document.getElementById('fab-add').addEventListener('click', goToCapture);
+            document.getElementById('file-camera').addEventListener('change', handleFileSelect);
+            document.getElementById('file-gallery').addEventListener('change', handleFileSelect);
+            
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                renderPresets(e.target.value);
+            });
+            
+            document.getElementById('filter-tabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('filter-tab')) {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    activeFilter = e.target.dataset.filter;
+                    renderPresets(document.getElementById('search-input').value);
+                }
+            });
+            
+            document.getElementById('quick-tags').addEventListener('click', (e) => {
+                if (e.target.classList.contains('quick-tag')) {
+                    document.querySelectorAll('.quick-tag').forEach(t => t.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                }
+            });
+        }
+        
+        // ============================================
+        // Navigation
+        // ============================================
+        const screens = {
+            home: document.getElementById('screen-home'),
+            capture: document.getElementById('screen-capture'),
+            edit: document.getElementById('screen-edit'),
+            detail: document.getElementById('screen-detail')
+        };
+        
+        function showScreen(name) {
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+            screens[name].classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.screen === name);
+            });
+        }
+        
+        function goHome() {
+            showScreen('home');
+            resetEditForm();
+            loadPresets();
+        }
+        
+        function goToCapture() {
+            resetEditForm();
+            showScreen('capture');
+            document.getElementById('capture-preview').innerHTML = `
+                <div class="capture-placeholder">
+                    <div class="capture-placeholder-icon">📷</div>
+                    <p>Toma o selecciona una foto<br>de tu pedalboard</p>
+                </div>
+            `;
+        }
+        
+        function goToEdit() {
+            showScreen('edit');
+            document.getElementById('edit-title').textContent = isEditing ? 'Editar Preset' : 'Nuevo Preset';
+        }
+        
+        // ============================================
+        // Camera / Gallery
+        // ============================================
+        function takePhoto() {
+            document.getElementById('file-camera').click();
+        }
+        
+        function selectFromGallery() {
+            document.getElementById('file-gallery').click();
+        }
+        
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            compressImage(file, 1200, 0.8).then(compressedDataUrl => {
+                currentImage = compressedDataUrl;
+                currentImageId = generateId();
+                
+                document.getElementById('capture-preview').innerHTML = `<img src="${currentImage}" alt="Preview">`;
+                document.getElementById('capture-preview').classList.add('has-image');
+                
+                setTimeout(() => {
+                    document.getElementById('edit-image').src = currentImage;
+                    goToEdit();
+                }, 300);
+            }).catch(err => {
+                console.error('Error compressing image:', err);
+                showToast('Error al procesar imagen');
+            });
+            
+            e.target.value = '';
+        }
+        
+        function compressImage(file, maxWidth, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(compressedDataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = event.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // ============================================
+        // Pedal & Knob Annotation
+        // ============================================
+        function toggleAnnotateMode() {
+            annotateMode = !annotateMode;
+            const btn = document.getElementById('add-pedal-btn');
+            const hint = document.getElementById('annotate-hint');
+            const preview = document.getElementById('edit-preview');
+            
+            if (annotateMode) {
+                btn.textContent = 'Listo';
+                btn.style.background = 'var(--accent)';
+                btn.style.color = 'var(--bg)';
+                btn.style.borderStyle = 'solid';
+                hint.style.display = 'block';
+                preview.classList.add('annotate-mode');
+            } else {
+                btn.textContent = '+ Marcar';
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.borderStyle = '';
+                hint.style.display = 'none';
+                preview.classList.remove('annotate-mode');
+            }
+        }
+        
+        function handlePreviewClick(e) {
+            if (!annotateMode) return;
+            
+            const preview = document.getElementById('edit-preview');
+            const rect = preview.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            
+            // Add new pedal
+            const newPedal = {
+                id: generateId(),
+                x: x,
+                y: y,
+                brand: null,    // For future AI detection
+                model: null,    // For future AI detection
+                manualName: '', // User input
+                knobs: []
+            };
+            
+            pedals.push(newPedal);
+            
+            renderPedalMarkers();
+            renderPedalCards();
+            
+            toggleAnnotateMode();
+            
+            // Focus on the new pedal name input
+            setTimeout(() => {
+                const inputs = document.querySelectorAll('.pedal-name-input');
+                if (inputs.length > 0) {
+                    inputs[inputs.length - 1].focus();
+                }
+            }, 100);
+        }
+        
+        function renderPedalMarkers() {
+            // Remove existing markers
+            document.querySelectorAll('.pedal-marker-overlay').forEach(m => m.remove());
+            
+            const preview = document.getElementById('edit-preview');
+            
+            pedals.forEach((pedal, i) => {
+                const el = document.createElement('div');
+                el.className = 'pedal-marker-overlay';
+                el.style.left = pedal.x + '%';
+                el.style.top = pedal.y + '%';
+                el.textContent = i + 1;
+                preview.appendChild(el);
+            });
+        }
+        
+        function renderPedalCards() {
+            const container = document.getElementById('pedals-list');
+            
+            container.innerHTML = pedals.map((pedal, pedalIndex) => `
+                <div class="pedal-card" data-pedal-id="${pedal.id}">
+                    <div class="pedal-header">
+                        <div class="pedal-marker">${pedalIndex + 1}</div>
+                        <div class="pedal-inputs">
+                            <input type="text" class="pedal-input pedal-name-input" 
+                                   placeholder="Nombre del pedal (ej: DD-7)"
+                                   value="${escapeHtml(pedal.manualName)}"
+                                   onchange="updatePedal('${pedal.id}', 'manualName', this.value)">
+                        </div>
+                        <button class="pedal-delete" onclick="deletePedal('${pedal.id}')">✕</button>
+                    </div>
+                    <div class="knobs-list">
+                        ${pedal.knobs.map((knob, knobIndex) => `
+                            <div class="knob-row">
+                                <input type="text" class="knob-input" placeholder="Knob (ej: Time)"
+                                       value="${escapeHtml(knob.name)}"
+                                       onchange="updateKnob('${pedal.id}', ${knobIndex}, 'name', this.value)">
+                                <input type="text" class="knob-input value" placeholder="Valor"
+                                       value="${escapeHtml(knob.value)}"
+                                       onchange="updateKnob('${pedal.id}', ${knobIndex}, 'value', this.value)">
+                                <button class="knob-delete" onclick="deleteKnob('${pedal.id}', ${knobIndex})">✕</button>
+                            </div>
+                        `).join('')}
+                        <button class="add-knob-btn" onclick="addKnob('${pedal.id}')">+ Agregar knob</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updatePedal(pedalId, field, value) {
+            const pedal = pedals.find(p => p.id === pedalId);
+            if (pedal) {
+                pedal[field] = value;
+            }
+        }
+        
+        function deletePedal(pedalId) {
+            pedals = pedals.filter(p => p.id !== pedalId);
+            renderPedalMarkers();
+            renderPedalCards();
+        }
+        
+        function addKnob(pedalId) {
+            const pedal = pedals.find(p => p.id === pedalId);
+            if (pedal) {
+                pedal.knobs.push({
+                    id: generateId(),
+                    name: '',
+                    value: '',
+                    x: null,  // For future: position on pedal
+                    y: null
+                });
+                renderPedalCards();
+                
+                // Focus on new knob input
+                setTimeout(() => {
+                    const card = document.querySelector(`[data-pedal-id="${pedalId}"]`);
+                    if (card) {
+                        const inputs = card.querySelectorAll('.knob-input:not(.value)');
+                        if (inputs.length > 0) {
+                            inputs[inputs.length - 1].focus();
+                        }
+                    }
+                }, 50);
+            }
+        }
+        
+        function updateKnob(pedalId, knobIndex, field, value) {
+            const pedal = pedals.find(p => p.id === pedalId);
+            if (pedal && pedal.knobs[knobIndex]) {
+                pedal.knobs[knobIndex][field] = value;
+            }
+        }
+        
+        function deleteKnob(pedalId, knobIndex) {
+            const pedal = pedals.find(p => p.id === pedalId);
+            if (pedal) {
+                pedal.knobs.splice(knobIndex, 1);
+                renderPedalCards();
+            }
+        }
+        
+        // ============================================
+        // Save Preset
+        // ============================================
+        async function savePreset() {
+            try {
+                const song = document.getElementById('input-song').value.trim();
+                const artist = document.getElementById('input-artist').value.trim();
+                const tagEl = document.querySelector('.quick-tag.selected');
+                const tag = tagEl ? tagEl.dataset.tag : '';
+                
+                if (!song) {
+                    showToast('Escribe un nombre para el preset');
+                    return;
+                }
+                
+                if (!currentImage) {
+                    showToast('Agrega una foto primero');
+                    return;
+                }
+                
+                const presetId = isEditing ? currentPresetId : generateId();
+                const imageId = currentImageId || generateId();
+                
+                // Save image separately
+                await dbPut('images', {
+                    id: imageId,
+                    data: currentImage
+                });
+                
+                // Build preset object
+                const preset = {
+                    id: presetId,
+                    song: song,
+                    artist: artist,
+                    tag: tag,
+                    imageId: imageId,
+                    pedals: pedals.map(p => ({
+                        id: p.id,
+                        x: p.x,
+                        y: p.y,
+                        brand: p.brand,
+                        model: p.model,
+                        manualName: p.manualName,
+                        knobs: p.knobs.map(k => ({
+                            id: k.id,
+                            name: k.name,
+                            value: k.value,
+                            x: k.x,
+                            y: k.y
+                        }))
+                    })),
+                    createdAt: isEditing 
+                        ? (presets.find(p => p.id === currentPresetId)?.createdAt || new Date().toISOString())
+                        : new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    syncedAt: null  // For future cloud sync
+                };
+                
+                await dbPut('presets', preset);
+                
+                showToast(isEditing ? 'Preset actualizado' : 'Preset guardado');
+                goHome();
+                
+            } catch (error) {
+                console.error('Error saving preset:', error);
+                showToast('Error al guardar: ' + error.message);
+            }
+        }
+        
+        function resetEditForm() {
+            currentImage = null;
+            currentImageId = null;
+            pedals = [];
+            annotateMode = false;
+            isEditing = false;
+            currentPresetId = null;
+            
+            document.getElementById('input-song').value = '';
+            document.getElementById('input-artist').value = '';
+            document.querySelectorAll('.quick-tag').forEach(t => t.classList.remove('selected'));
+            document.getElementById('pedals-list').innerHTML = '';
+            document.querySelectorAll('#edit-preview .pedal-marker-overlay').forEach(m => m.remove());
+            document.getElementById('annotate-hint').style.display = 'none';
+            
+            const btn = document.getElementById('add-pedal-btn');
+            btn.textContent = '+ Marcar';
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.borderStyle = '';
+        }
+        
+        // ============================================
+        // Render Presets List
+        // ============================================
+        async function renderPresets(searchQuery = '') {
+            const container = document.getElementById('presets-list');
+            const query = searchQuery.toLowerCase();
+            
+            let filtered = [...presets];
+            
+            if (activeFilter !== 'all') {
+                filtered = filtered.filter(p => p.tag === activeFilter);
+            }
+            
+            if (query) {
+                filtered = filtered.filter(p => 
+                    p.song.toLowerCase().includes(query) ||
+                    p.artist.toLowerCase().includes(query)
+                );
+            }
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎛️</div>
+                        <h3>${presets.length === 0 ? 'Sin presets aún' : 'Sin resultados'}</h3>
+                        <p>${presets.length === 0 ? 'Toca + para agregar tu primer preset' : 'Intenta con otra búsqueda'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Load thumbnails
+            const presetsWithImages = await Promise.all(filtered.map(async preset => {
+                let imageData = null;
+                if (preset.imageId) {
+                    const img = await dbGet('images', preset.imageId);
+                    imageData = img?.data;
+                }
+                return { ...preset, imageData };
+            }));
+            
+            container.innerHTML = presetsWithImages.map(preset => {
+                const knobCount = preset.pedals?.reduce((sum, p) => sum + (p.knobs?.length || 0), 0) || 0;
+                const pedalCount = preset.pedals?.length || 0;
+                
+                return `
+                    <div class="preset-card" onclick="viewPreset('${preset.id}')">
+                        <div class="preset-thumb">
+                            ${preset.imageData 
+                                ? `<img src="${preset.imageData}" alt="${escapeHtml(preset.song)}">` 
+                                : '<div class="preset-thumb-empty">🎸</div>'
+                            }
+                        </div>
+                        <div class="preset-info">
+                            <div class="preset-song">${escapeHtml(preset.song)}</div>
+                            <div class="preset-artist">${escapeHtml(preset.artist) || formatDate(preset.createdAt)}</div>
+                            <div class="preset-tags">
+                                ${preset.tag ? `<span class="preset-tag">${preset.tag}</span>` : ''}
+                                ${pedalCount > 0 ? `<span class="preset-tag">${pedalCount} pedal${pedalCount > 1 ? 'es' : ''}</span>` : ''}
+                                ${knobCount > 0 ? `<span class="preset-tag">${knobCount} knob${knobCount > 1 ? 's' : ''}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // ============================================
+        // View Preset Detail
+        // ============================================
+        async function viewPreset(id) {
+            const preset = presets.find(p => p.id === id);
+            if (!preset) return;
+            
+            currentPresetId = id;
+            
+            // Load image
+            let imageData = '';
+            if (preset.imageId) {
+                const img = await dbGet('images', preset.imageId);
+                imageData = img?.data || '';
+            }
+            
+            document.getElementById('detail-img').src = imageData;
+            document.getElementById('detail-song').textContent = preset.song;
+            document.getElementById('detail-artist').textContent = preset.artist || '-';
+            document.getElementById('detail-date').textContent = '📅 ' + formatDate(preset.createdAt);
+            document.getElementById('detail-tag').textContent = preset.tag ? '🏷️ ' + preset.tag : '';
+            
+            // Render pedal markers on image
+            const imageContainer = document.getElementById('detail-image');
+            imageContainer.querySelectorAll('.pedal-marker-overlay').forEach(m => m.remove());
+            
+            if (preset.pedals) {
+                preset.pedals.forEach((pedal, i) => {
+                    const el = document.createElement('div');
+                    el.className = 'pedal-marker-overlay';
+                    el.style.left = pedal.x + '%';
+                    el.style.top = pedal.y + '%';
+                    el.textContent = i + 1;
+                    imageContainer.appendChild(el);
+                });
+            }
+            
+            // Render pedals list
+            const pedalsContainer = document.getElementById('detail-pedals');
+            const sectionTitle = document.getElementById('pedals-section-title');
+            
+            if (preset.pedals && preset.pedals.length > 0) {
+                sectionTitle.style.display = 'block';
+                pedalsContainer.innerHTML = preset.pedals.map((pedal, i) => `
+                    <div class="detail-pedal-card">
+                        <div class="detail-pedal-header">
+                            <div class="pedal-marker">${i + 1}</div>
+                            <div>
+                                <div class="detail-pedal-name">${escapeHtml(pedal.manualName) || 'Pedal sin nombre'}</div>
+                                ${pedal.brand && pedal.model 
+                                    ? `<div class="detail-pedal-model">${escapeHtml(pedal.brand)} ${escapeHtml(pedal.model)}</div>` 
+                                    : ''}
+                            </div>
+                        </div>
+                        ${pedal.knobs && pedal.knobs.length > 0 ? `
+                            <div>
+                                ${pedal.knobs.map(k => `
+                                    <div class="detail-knob-row">
+                                        <span class="detail-knob-name">${escapeHtml(k.name) || 'Knob'}</span>
+                                        <span class="detail-knob-value">${escapeHtml(k.value) || '-'}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<p style="color: var(--text-dim); font-size: 0.85rem;">Sin knobs registrados</p>'}
+                    </div>
+                `).join('');
+            } else {
+                sectionTitle.style.display = 'none';
+                pedalsContainer.innerHTML = `
+                    <p style="color: var(--text-dim); text-align: center; padding: 20px;">
+                        Sin pedales marcados
+                    </p>
+                `;
+            }
+            
+            showScreen('detail');
+        }
+        
+        async function editCurrentPreset() {
+            const preset = presets.find(p => p.id === currentPresetId);
+            if (!preset) return;
+            
+            isEditing = true;
+            currentImageId = preset.imageId;
+            
+            // Load image
+            if (preset.imageId) {
+                const img = await dbGet('images', preset.imageId);
+                currentImage = img?.data || '';
+            }
+            
+            pedals = preset.pedals ? preset.pedals.map(p => ({
+                id: p.id,
+                x: p.x,
+                y: p.y,
+                brand: p.brand,
+                model: p.model,
+                manualName: p.manualName,
+                knobs: p.knobs ? p.knobs.map(k => ({
+                    id: k.id,
+                    name: k.name,
+                    value: k.value,
+                    x: k.x,
+                    y: k.y
+                })) : []
+            })) : [];
+            
+            document.getElementById('edit-image').src = currentImage;
+            document.getElementById('input-song').value = preset.song;
+            document.getElementById('input-artist').value = preset.artist;
+            
+            document.querySelectorAll('.quick-tag').forEach(t => {
+                t.classList.toggle('selected', t.dataset.tag === preset.tag);
+            });
+            
+            renderPedalMarkers();
+            renderPedalCards();
+            goToEdit();
+        }
+        
+        // ============================================
+        // Delete
+        // ============================================
+        function confirmDelete() {
+            document.getElementById('delete-dialog').classList.add('show');
+        }
+        
+        function closeDialog() {
+            document.getElementById('delete-dialog').classList.remove('show');
+        }
+        
+        async function deletePreset() {
+            try {
+                const preset = presets.find(p => p.id === currentPresetId);
+                
+                // Delete image
+                if (preset?.imageId) {
+                    await dbDelete('images', preset.imageId);
+                }
+                
+                // Delete preset
+                await dbDelete('presets', currentPresetId);
+                
+                closeDialog();
+                showToast('Preset eliminado');
+                goHome();
+            } catch (error) {
+                console.error('Error deleting preset:', error);
+                showToast('Error al eliminar');
+            }
+        }
+        
+        // ============================================
+        // Utils
+        // ============================================
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+        
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, (m) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[m]));
+        }
+    </script>
+</body>
+</html>
